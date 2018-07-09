@@ -18,7 +18,7 @@ key="ignore1" value="textrue/*"
 key="ignore上面的数字+1" value="忽略文件的相对路径，允许通配符*"
 
 下载的地址(最后必须为/)
-key="url" value="https://github.com/247321453/ygocore-update/raw/master/"
+key="url" value="https://raw.githubusercontent.com/Jambalaya751955/ygopro-database-JP/"
 
 代理设置（可无视）
 useproxy的value为true（小写），则通过代理下载文件

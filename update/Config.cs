@@ -18,7 +18,7 @@ namespace update
 	public class Config
 	{
 		/// <summary>下载线程数</summary>
-		public static int ThreadNum=0x10;
+		public static int ThreadNum = 0x10;
 		/// <summary>工作目录</summary>
 		public static string workPath;
 		/// <summary>信息目录</summary>
@@ -48,84 +48,62 @@ namespace update
 		public static string url_rename;
 		
 		/// <summary>使用代理</summary>
-		public static bool useProxy=false;
+		public static bool useProxy = false;
 		/// <summary>代理IP</summary>
-		public static string proxyIP="127.0.0.1";
+		public static string proxyIP = "127.0.0.1";
 		/// <summary>代理端口</summary>
-		public static int proxyPort=80;
+		public static int proxyPort = 80;
 		
 		public static string[] ignores;
-		
-		public static string GetUrl(string name){
-			return url_home+name;
-		}
-		public static string GetPath(string name){
-			return Path.Combine(workPath, name.Replace('/',Path.DirectorySeparatorChar));
-		}
-		public static void setWorkPath(string workpath,string url){
+
+        public static string GetUrl(string name) => url_home + name;
+
+        public static string GetPath(string name) => Path.Combine(path1: workPath, path2: name.Replace(oldChar: '/', newChar: Path.DirectorySeparatorChar));
+
+        public static void SetWorkPath(string workPath, string url_home){
 			string tmp;
-			if(string.IsNullOrEmpty(workpath)){
-				//当前目录
-				workPath=AppDomain.CurrentDomain.
-					SetupInformation.ApplicationBase;
-				
-				DirectoryInfo dirinfo=new DirectoryInfo(workPath);
-				tmp=(dirinfo.Parent!=null)?dirinfo.Parent.FullName:"";
-				if(!string.IsNullOrEmpty(tmp))//上一级目录不为空
-					workPath=tmp;
-			}
+			if(string.IsNullOrEmpty(value: workPath)){
+                //当前目录
+                Config.workPath = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
+                tmp = (new DirectoryInfo(path: Config.workPath).Parent != null)? new DirectoryInfo(path: Config.workPath).Parent.FullName:"";
+				if(!string.IsNullOrEmpty(value: tmp))//上一级目录不为空
+                    Config.workPath = tmp;
+			}else
+                Config.workPath = workPath;
+			if(string.IsNullOrEmpty(value: url_home))
+                Config.url_home = ConfigurationManager.AppSettings[name: "url"];
 			else
-				workPath=workpath;
-			if(string.IsNullOrEmpty(url))
-				url_home = ConfigurationManager.AppSettings["url"];
-			else
-				url_home=url;
-			url_version = url_home+"update/version.txt";
-			url_delete = url_home+"update/delete.txt";
-			url_filelist = url_home+"update/filelist.txt";
-			url_rename = url_home+"update/rename.txt";
-			
-			infoPath=Path.Combine(workPath, "update");
-			if(!Directory.Exists(infoPath)){
-				Directory.CreateDirectory(infoPath);
-			}
-			versionFile=Path.Combine(infoPath, "version.txt");
+                Config.url_home = url_home;
+            url_version = $"{Config.url_home}update/version.txt";
+            url_delete = $"{Config.url_home}update/delete.txt";
+            url_filelist = $"{Config.url_home}update/filelist.txt";
+            url_rename = $"{Config.url_home}update/rename.txt";
+
+            infoPath = Path.Combine(path1: Config.workPath, path2: "update");
+			if(!Directory.Exists(path: infoPath))
+				Directory.CreateDirectory(path: infoPath);
+			versionFile = Path.Combine(path1: infoPath, path2: "version.txt");
 			newVersionFile = Path.Combine(infoPath, "version_new.txt");
-			deleteFile=Path.Combine(infoPath, "delete.txt");
-			renameFile=Path.Combine(infoPath, "rename.txt");
-			filelistFile=Path.Combine(infoPath, "filelist.txt");
-			errorFile=Path.Combine(infoPath, "error.txt");
+			deleteFile = Path.Combine(path1: infoPath, path2: "delete.txt");
+			renameFile = Path.Combine(path1: infoPath, path2: "rename.txt");
+			filelistFile = Path.Combine(path1: infoPath, path2: "filelist.txt");
+			errorFile = Path.Combine(path1: infoPath, path2: "error.txt");
 		}
-		public static void Init(string workpath,string url){
-			string tmp;
-			Config.setWorkPath(workpath,url);
-			
-			//忽略列表
-			List<string> iglist=new List<string>();
-			int i=1;
-			tmp=ConfigurationManager.AppSettings["ignore"+i];
-			
-			while(!string.IsNullOrEmpty(tmp)){
-				tmp=tmp.Replace("*","[^/]*?");
-				iglist.Add(tmp);
-				i++;
-				tmp=ConfigurationManager.AppSettings["ignore"+i];
-			}
-			
-			ignores=iglist.ToArray();
-			
-			
+
+		public static void Init(string workPath, string url_home){
+            SetWorkPath(workPath: workPath, url_home: url_home);
+            //忽略列表
+            List<string> iglist = new List<string>();
+
+            for (int i = 1;  !string.IsNullOrEmpty(value: ConfigurationManager.AppSettings[name: $"ignore{i}"]); i++)
+				iglist.Add(item: ConfigurationManager.AppSettings[name: $"ignore{i}"].Replace(oldValue: "*", newValue: "[^/]*?"));
+            ignores = iglist.ToArray();
 			//代理设置
-			bool useProxy=("true".Equals(ConfigurationManager.AppSettings["useproxy"],
-			                             StringComparison.OrdinalIgnoreCase))?true:false;
+			bool useProxy = ("true".Equals(ConfigurationManager.AppSettings[name: "useproxy"], StringComparison.OrdinalIgnoreCase))? true:false;
 			if(useProxy){
-				string ip=ConfigurationManager.AppSettings["proxy"];
-				string[] strs=ip.Split(':');
-				proxyIP=strs[0];
-				int.TryParse(strs[1],out proxyPort);
+                proxyIP = ConfigurationManager.AppSettings[name: "proxy"].Split(separator: ':')[0];
+				int.TryParse(s: ConfigurationManager.AppSettings[name: "proxy"].Split(separator: ':')[1], result: out proxyPort);
 			}
-		}
-		
-		
+		}	
 	}
 }

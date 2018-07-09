@@ -5,127 +5,118 @@
  * 时间: 21:33
  * 
  */
+
 using System;
 using System.IO;
 using System.Net;
 using System.Threading;
-using System.Collections.Generic;
 
 namespace update
 {
-	/// <summary>
-	/// Description of MyHttp.
-	/// </summary>
-	public class MyHttp
+    /// <summary>
+    /// Description of MyHttp.
+    /// </summary>
+    public class MyHttp
 	{
-		public static int NUM=0;
-		public static int MAX_NUM=0x10;
-		private string _url,_filename;
-		private static int NTASK=0;
+		public static int NUM = 0;
+		public static int MAX_NUM = 0x10;
+        private readonly string url;
+        private readonly string filename;
+        private static int NTASK=0;
 		private static int TASK=0;
-		private fileinfo _ff;
-		private static bool isProxy=false;
+		private readonly Fileinfo ff;
+		private static bool isProxy = false;
 		private static string proxyip;
 		private static int proxyport;
-		private static MyHttpListener myhttplistiner=null;
+		private static IMyHttpListener imyhttplistiner = null;
 		
-		public MyHttp(string url, string filename, fileinfo ff){
-			this._url=url;
-			this._filename=filename;
-			this._ff=ff;
+		public MyHttp(string url, string filename, Fileinfo ff){
+			this.url = url;
+			this.filename = filename;
+			this.ff = ff;
 		}
 		
 		public void Start(){
-			Thread thread=new Thread(Download);
-			thread.IsBackground=true;
-			thread.Start();
+            Thread thread = new Thread(start: Download){
+                IsBackground = true
+            };
+            thread.Start();
 		}
 		
 		public void Download(){
-			if(MyHttp.NUM>=MyHttp.MAX_NUM)
+			if(NUM >= MAX_NUM)
 				return;
 			NUM++;
 			TASK++;
-			MyHttp.DownLoad(_url,_filename,_ff);
+            DownLoad(url: url, filename: filename, ff: ff);
 			NTASK++;
 			NUM--;
 		}
-		
-		public static void SetListner(MyHttpListener listiner){
-			myhttplistiner=listiner;
+
+        public static void SetListner(IMyHttpListener listiner) => imyhttplistiner = listiner;
+
+        public static void Init(int max){
+			ServicePointManager.DefaultConnectionLimit = 255;
+			MAX_NUM = max;
 		}
 		
-		public static void init(int max){
-			ServicePointManager.DefaultConnectionLimit=255;
-			MAX_NUM=max;
+		public static void SetProxy(bool isProxy, string proxyip, int proxyport){
+            MyHttp.isProxy = isProxy;
+            MyHttp.proxyip = proxyip;
+            MyHttp.proxyport = proxyport;
 		}
-		
-		public static void setProxy(bool isuse,string ip,int port){
-			isProxy=isuse;
-			proxyip=ip;
-			proxyport=port;
-		}
-		
-		public static bool isOK(){
-			return (NTASK==TASK);
-		}
-		
-		public static int GetTask(){
-			return TASK-NTASK;
-		}
-		public static bool DownLoad(string url,string filename)
+
+        public static bool IsOK() => (NTASK == TASK);
+
+        public static int GetTask() => TASK - NTASK;
+
+        public static bool DownLoad(string url, string filename) => DownLoad(url: url, filename: filename, ff: null);
+
+        public static bool DownLoad(string url, string filename, Fileinfo ff)
 		{
-			return DownLoad(url,filename,null);
-		}
-		public static bool DownLoad(string url,string filename,fileinfo ff)
-		{
-			if(myhttplistiner!=null)
-				myhttplistiner.OnStart(url, filename);
-			bool isOK=false;
-			try
-			{
-				if(File.Exists(filename))
-					File.Delete(filename);
-				else
-					MyUtil.createDir(filename);
-				HttpWebRequest Myrq = (HttpWebRequest)System.Net.HttpWebRequest.Create(url);
-				Myrq.Timeout = 30000;
-				//Myrq.UserAgent="Mozilla/5.0 (Windows NT 6.2; WOW64) "
-				//	+"AppleWebKit/537.36 (KHTML, like Gecko) "
-				//	+"Chrome/27.0.1453.94 Safari/537.36";
-				if(MyHttp.isProxy){
-					Myrq.Proxy = new WebProxy(MyHttp.proxyip, MyHttp.proxyport);
-				}
-				
-				HttpWebResponse myrp = (HttpWebResponse)Myrq.GetResponse();
-				long totalBytes = myrp.ContentLength;
-				
-				Stream st = myrp.GetResponseStream();
-				Stream so = new System.IO.FileStream(filename+".tmp", FileMode.Create);
-				long totalDownloadedByte = 0;
-				byte[] by = new byte[2048];
-				int osize = st.Read(by, 0, (int)by.Length);
-				while (osize > 0)
-				{
-					totalDownloadedByte = osize + totalDownloadedByte;
-					so.Write(by, 0, osize);
-					osize = st.Read(by, 0, (int)by.Length);
-				}
-				so.Close();
-				st.Close();
-				File.Delete(filename);
-				File.Move(filename+".tmp", filename);
-			}
-			catch (System.Exception)
-			{
-				isOK= false;
-			}
-			isOK=File.Exists(filename);
-			if(myhttplistiner!=null)
-				myhttplistiner.OnEnd(ff, isOK);
+			if(imyhttplistiner != null)
+				imyhttplistiner.OnStart(name: url, file: filename);
+
+            bool isOK = false;
+
+            try {
+                if (File.Exists(filename))
+                    File.Delete(filename);
+                else
+                    MyUtil.CreateDir(filename);
+
+                HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(requestUriString: url);
+                httpWebRequest.Timeout = 30000;
+                //Myrq.UserAgent="Mozilla/5.0 (Windows NT 6.2; WOW64) "
+                //	+"AppleWebKit/537.36 (KHTML, like Gecko) "
+                //	+"Chrome/27.0.1453.94 Safari/537.36";
+                if (isProxy)
+                    httpWebRequest.Proxy = new WebProxy(Host: proxyip, Port: proxyport);
+
+                using (HttpWebResponse httpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse()){
+                    using (Stream st = httpWebResponse.GetResponseStream()){
+                        using (Stream so = new FileStream(path: $"{filename}.tmp", mode: FileMode.Create)){
+                            long totalDownloadedByte = 0;
+                            byte[] by = new byte[2048];
+                            int osize = st.Read(buffer: by, offset: 0, count: by.Length);
+                            while (osize > 0){
+                                totalDownloadedByte = osize + totalDownloadedByte;
+                                so.Write(buffer: by, offset: 0, count: osize);
+                                osize = st.Read(buffer: by, offset: 0, count: by.Length);
+                            }
+                        }
+                    }
+                }
+                File.Delete(path: filename);
+                File.Move(sourceFileName: $"{filename}.tmp", destFileName: filename);
+            }
+            catch (Exception){
+                isOK = false;
+            }
+            isOK = File.Exists(path: filename);
+			if(imyhttplistiner != null)
+				imyhttplistiner.OnEnd(ff: ff, isOK: isOK);
 			return isOK;
 		}
-		
 	}
-	
 }

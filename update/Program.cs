@@ -14,46 +14,44 @@ namespace update
 		public static void Main(string[] args)
 		{
 			Console.Title="AUTOUPDATE";
-			Config.Init(null,null);
+			Config.Init(null, null);
 
-			if(args.Length>0){
+			if(args.Length > 0){
 				switch(args[0]){
-					case "-m":UpdateList(args);break;
-					case "-ci":UpdateList(args);return;
-					case "--ignore-sound":Download(null,null,true);break;
-				case "-d":
-					if(args.Length==2)
-						Download(args[1],null,false);
+					case "-m":UpdateList(args: args); break;
+					case "-ci":UpdateList(args: args); return;
+					case "--ignore-sound":Download(workPath: null, url_home: null, ignore_sound: true); break;
+                    case "-d":
+					if(args.Length == 2)
+						Download(workPath: args[1], url_home: null, ignore_sound: false);
 					else{
-						if(args[2]=="--ignore-sound")
-							Download(args[1],null,true);
+						if(args[2] == "--ignore-sound")
+							Download(workPath: args[1], url_home: null, ignore_sound: true);
 						else if(args[3]=="--ignore-sound")
-							Download(args[1],args[2],true);
+							Download(workPath: args[1], url_home: args[2], ignore_sound: true);
 					}
 					break;
 				}
-			}else{
-				Download(null,null,false);
-			}
-			Console.WriteLine("Press Any Key to continue ... ... ");
-			Console.ReadKey(true);
+			}else
+				Download(workPath: null, url_home: null, ignore_sound: false);
+			Console.WriteLine(value: "Press Any Key to continue ... ... ");
+			Console.ReadKey(intercept: true);
 		}
+
 		private static void UpdateList(string[] args){
-			if(args.Length>=2){
-				Config.setWorkPath(args[1],null);
-			}
+			if(args.Length >= 2)
+				Config.SetWorkPath(workPath: args[1], url_home: null);
 			bool ci_run = false;
 			if(args[0] == "-ci")
 				ci_run = true;
-			Server server=new Server();
-			server.Run(ci_run);//更新文件列表
+            new Server().Run(ci_run: ci_run);//更新文件列表
 		}
-		private static void Download(string path,string url,bool ignore_sound){
+
+		private static void Download(string workPath, string url_home, bool ignore_sound){
 			//线程数
-			MyHttp.init(Config.ThreadNum);
-			Client client=new Client(path,url);
-			MyHttp.SetListner(client);
-			client.Run(ignore_sound);//开始更新
+			MyHttp.Init(max: Config.ThreadNum);
+            MyHttp.SetListner(listiner: new Client(workPath: workPath, url_home: url_home));
+            new Client(workPath: workPath, url_home: url_home).Run(ignore_sound: ignore_sound);//开始更新
 		}
 	}
 }

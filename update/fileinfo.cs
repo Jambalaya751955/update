@@ -10,20 +10,20 @@ using System;
 namespace update
 {
 	/// <summary>
-	/// Description of fileinfo.
+	/// Description of Fileinfo.
 	/// </summary>
-	public class fileinfo
+	public class Fileinfo
 	{
-		public fileinfo(string name,string md5){
-			this.name=name;
-			this.md5=md5;
-		}
-		public fileinfo(){
-			name="";
-			md5="";
-		}
-		public string name;
-		public string md5;
-	}
+        public string name, md5;
+        
+        public Fileinfo(){
+            name = "";
+            md5 = "";
+        }
 
+        public Fileinfo(string name, string md5){
+			this.name = name;
+			this.md5 = md5;
+		}
+	}
 }
