@@ -17,12 +17,11 @@ namespace update
     public class Server
 	{
         private List<Fileinfo> list;    //文件信息列表
-        private bool ci_run;
+        public static bool ci_run = false;
         public Server() => list = new List<Fileinfo>();
 
-        public void Run(bool ci_run){
-			this.ci_run = ci_run;
-			if (this.ci_run)
+        public void Run(){
+			if (ci_run)
                 Console.WriteLine(value: "Updating Filelist on CI... ...");				
 			else
                 Console.WriteLine(value: "Updating Filelist... ...");
@@ -42,14 +41,12 @@ namespace update
 		}
 
         private void AddDir(string dir){
-			//所有文件
-			string[] files = Directory.GetFiles(path: dir);
-			foreach(string file in files)
+            //所有文件
+            foreach (string file in Directory.GetFiles(path: dir))
 				AddFile(file: file);
             //获取所有子目录
             foreach (string dirs in Directory.GetDirectories(path: dir)){
-                if (!dirs.EndsWith(value: Path.DirectorySeparatorChar + ".git"
-                               , comparisonType: StringComparison.OrdinalIgnoreCase))
+                if (!dirs.EndsWith(value: $"{Path.DirectorySeparatorChar}.git", comparisonType: StringComparison.OrdinalIgnoreCase))
                     AddDir(dir: dirs); //添加子目录的所有文件
             }
         }
@@ -58,7 +55,8 @@ namespace update
 			string filename = Path.GetFileName(path: file);
 			string exename = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
 			if(filename.EndsWith(value: "Thumbs.db", comparisonType: StringComparison.OrdinalIgnoreCase)
-			   || filename.EndsWith(value: ".gitignore", comparisonType: StringComparison.OrdinalIgnoreCase)
+               || filename.EndsWith(value: ".gitattributes", comparisonType: StringComparison.OrdinalIgnoreCase)
+               || filename.EndsWith(value: ".gitignore", comparisonType: StringComparison.OrdinalIgnoreCase)
 			   || filename.EndsWith(value: "LICENSE", comparisonType: StringComparison.OrdinalIgnoreCase)
 			   || filename.EndsWith(value: "appveyor.yml", comparisonType: StringComparison.OrdinalIgnoreCase)
 			   || filename.EndsWith(value: ".travis.yml", comparisonType: StringComparison.OrdinalIgnoreCase)
@@ -69,7 +67,6 @@ namespace update
                || filename.EndsWith(value: "update-server.bat", comparisonType: StringComparison.OrdinalIgnoreCase)
                || filename.EndsWith(value: "desktop.ini", comparisonType: StringComparison.OrdinalIgnoreCase)
 			   || filename.EndsWith(value: "start.htm", comparisonType: StringComparison.OrdinalIgnoreCase)
-			   || filename.EndsWith(value: "update.exe.config", comparisonType: StringComparison.OrdinalIgnoreCase)
 			   || file == exename
 			   || file == $"{exename}.config"
               )

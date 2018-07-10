@@ -48,27 +48,25 @@ namespace update
 		public static string url_rename;
 		
 		/// <summary>使用代理</summary>
-		public static bool useProxy = false;
+		public static bool useProxy = ("true".Equals(value: ConfigurationManager.AppSettings[name: "useproxy"], comparisonType: StringComparison.OrdinalIgnoreCase)) ? true : false;
 		/// <summary>代理IP</summary>
-		public static string proxyIP = "127.0.0.1";
+		public static string proxyIP = ConfigurationManager.AppSettings[name: "proxy"].Split(separator: ':')[0];
 		/// <summary>代理端口</summary>
-		public static int proxyPort = 80;
-		
-		public static string[] ignores;
+		public static int proxyPort = int.Parse(s: ConfigurationManager.AppSettings[name: "proxy"].Split(separator: ':')[1]);
+
+        /// <summary>Download without sound</summary>
+        public static bool ignore_sound = false;
+        /// <summary>Download without specific files</summary>
+        public static string[] ignores;
 
         public static string GetUrl(string name) => url_home + name;
 
         public static string GetPath(string name) => Path.Combine(path1: workPath, path2: name.Replace(oldChar: '/', newChar: Path.DirectorySeparatorChar));
 
         public static void SetWorkPath(string workPath, string url_home){
-			string tmp;
-			if(string.IsNullOrEmpty(value: workPath)){
-                //当前目录
-                Config.workPath = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
-                tmp = (new DirectoryInfo(path: Config.workPath).Parent != null)? new DirectoryInfo(path: Config.workPath).Parent.FullName:"";
-				if(!string.IsNullOrEmpty(value: tmp))//上一级目录不为空
-                    Config.workPath = tmp;
-			}else
+			if(string.IsNullOrEmpty(value: workPath))
+                Config.workPath = ConfigurationManager.AppSettings[name: "path"];
+            else
                 Config.workPath = workPath;
 			if(string.IsNullOrEmpty(value: url_home))
                 Config.url_home = ConfigurationManager.AppSettings[name: "url"];
@@ -83,7 +81,7 @@ namespace update
 			if(!Directory.Exists(path: infoPath))
 				Directory.CreateDirectory(path: infoPath);
 			versionFile = Path.Combine(path1: infoPath, path2: "version.txt");
-			newVersionFile = Path.Combine(infoPath, "version_new.txt");
+			newVersionFile = Path.Combine(path1: infoPath, path2: "version_new.txt");
 			deleteFile = Path.Combine(path1: infoPath, path2: "delete.txt");
 			renameFile = Path.Combine(path1: infoPath, path2: "rename.txt");
 			filelistFile = Path.Combine(path1: infoPath, path2: "filelist.txt");
@@ -98,12 +96,6 @@ namespace update
             for (int i = 1;  !string.IsNullOrEmpty(value: ConfigurationManager.AppSettings[name: $"ignore{i}"]); i++)
 				iglist.Add(item: ConfigurationManager.AppSettings[name: $"ignore{i}"].Replace(oldValue: "*", newValue: "[^/]*?"));
             ignores = iglist.ToArray();
-			//代理设置
-			bool useProxy = ("true".Equals(ConfigurationManager.AppSettings[name: "useproxy"], StringComparison.OrdinalIgnoreCase))? true:false;
-			if(useProxy){
-                proxyIP = ConfigurationManager.AppSettings[name: "proxy"].Split(separator: ':')[0];
-				int.TryParse(s: ConfigurationManager.AppSettings[name: "proxy"].Split(separator: ':')[1], result: out proxyPort);
-			}
 		}	
 	}
 }

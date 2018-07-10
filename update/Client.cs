@@ -7,7 +7,6 @@
  */
 using System;
 using System.IO;
-using System.Configuration;
 using System.Collections.Generic;
 using System.Text;
 using System.Reflection;
@@ -19,7 +18,7 @@ namespace update
     /// </summary>
     public class Client : IMyHttpListener
 	{
-        private List<Fileinfo> errorlist;
+        private List<Fileinfo> errorlist = new List<Fileinfo>();
         public int Num, All_num;
 
         public void OnStart(string name, string file){
@@ -27,20 +26,10 @@ namespace update
             //Console.WriteLine("保存到："+file);
         }
 
-        public Client(string workPath, string url_home){
-			if (string.IsNullOrEmpty(value: workPath))
-                Config.SetWorkPath(workPath: ConfigurationManager.AppSettings["path"], url_home: url_home);
-            else
-                Config.SetWorkPath(workPath: workPath, url_home: url_home);
-
-            errorlist = new List<Fileinfo>();
+        public Client(){
 			//代理设置
-			if(Config.useProxy){
+			if(Config.useProxy)
 				Console.WriteLine(value: $"USE PROXY:{Config.proxyIP}:{Config.proxyPort}");
-				MyHttp.SetProxy(isProxy: true, proxyip: Config.proxyIP, proxyport: Config.proxyPort);
-			}
-			else
-				MyHttp.SetProxy(isProxy: false, proxyip: "127.0.0.1", proxyport: 80);
 		}
 
         private void Delete(){
@@ -48,10 +37,9 @@ namespace update
 				return;
             foreach (string line in File.ReadAllLines(path: Config.deleteFile, encoding: Encoding.UTF8)){
                 if (!line.StartsWith(value: "#")){
-					string file = Config.GetPath(name: line);
-					if(File.Exists(path: file)){
+					if(File.Exists(path: Config.GetPath(name: line))){
 						Console.WriteLine(value: $"DELETE FILE:{line}");
-						File.Delete(path: file);
+						File.Delete(path: Config.GetPath(name: line));
 					}
 				}
 			}
@@ -72,9 +60,8 @@ namespace update
 
         private void ShowProcess(int Num, int All_num) => Console.Title = $"PROGRESS: {Num}/{All_num}";
 
-        public bool Download(string name, string md5, bool isHide, bool ignore_sound){
-            string file = Config.GetPath(name: name);
-            if (ignore_sound && (name.EndsWith(value: ".mp3", comparisonType: StringComparison.OrdinalIgnoreCase)
+        public bool Download(string name, string md5){
+            if (Config.ignore_sound && (name.EndsWith(value: ".mp3", comparisonType: StringComparison.OrdinalIgnoreCase)
                 || name.EndsWith(value: ".ogg", comparisonType: StringComparison.OrdinalIgnoreCase)
                 || name.EndsWith(value: ".wav", comparisonType: StringComparison.OrdinalIgnoreCase))){
                 //ignores sound
@@ -83,14 +70,13 @@ namespace update
                 return true;
             }
 
-            if (File.Exists(path: file)){
-                if (md5 == MyUtil.MD5_File(fileName: file)){
+            if (File.Exists(path: Config.GetPath(name: name))){
+                if (md5 == MyUtil.MD5_File(fileName: Config.GetPath(name: name))){
                     //一致
                     Console.WriteLine(value: $"SKIPPED:{name}");
                     ShowProcess(Num: Num++, All_num: All_num);
                     return true;
-                }
-                else if (MyUtil.CheckList(iglist: Config.ignores, name: name)){
+                }else if (MyUtil.CheckList(iglist: Config.ignores, name: name)){
                     //忽略更新
                     Console.WriteLine(value: $"IGNORED:{name}");
                     ShowProcess(Num: Num++, All_num: All_num);
@@ -102,26 +88,25 @@ namespace update
                 //System.Threading.Thread.Sleep(100);
             }
             //下载文件
-            new MyHttp(Config.GetUrl(name: name), file, new Fileinfo(name: name, md5: md5)).Start();
+            new MyHttp(url: Config.GetUrl(name: name), filename: Config.GetPath(name: name), ff: new Fileinfo(name: name, md5: md5)).Start();
             return true;
             //return MyHttp.DownLoad(url_download+name,file);
         }
 
-        private void Update(bool ignore_sound){
+        private void Update(){
 			if(!File.Exists(Config.errorFile)){//上一次下载是否失败
 				Console.WriteLine(value: "Downloading Filelist... ...");
 				if(!MyHttp.DownLoad(url: Config.url_filelist, filename: Config.filelistFile))
 					return;
 				Console.WriteLine(value: "Starting Update... ...");
-			}else{
+			}else {
 				File.Delete(path: Config.filelistFile);
 				File.Move(sourceFileName: Config.errorFile, destFileName: Config.filelistFile);
 				Console.WriteLine(value: "Continuing Update... ...");
 			}
 
-			if(ignore_sound){
+			if(Config.ignore_sound)
 				Console.WriteLine(value: "The sound files will be ignored.");
-			}
 
             All_num = File.ReadAllLines(path: Config.filelistFile, encoding: Encoding.UTF8).Length;
 			Num = 0;
@@ -129,14 +114,13 @@ namespace update
 
 			foreach(string line in File.ReadAllLines(path: Config.filelistFile, encoding: Encoding.UTF8)){
 				if(!line.StartsWith(value: "#")){
-                    if (line.Split(separator: '\t').Length >= 2){
-                        Download(name: line.Split(separator: '\t')[0], md5: line.Split(separator: '\t')[1], isHide: false, ignore_sound: ignore_sound);
-					}
+                    if (line.Split(separator: '\t').Length >= 2)
+                        Download(name: line.Split(separator: '\t')[0], md5: line.Split(separator: '\t')[1]);
 				}
 			}
 
 			while(!MyHttp.IsOK()){
-                // Do not start next process until finish task
+                // Do not start next process until finish task.
 			}
 
 			if(errorlist.Count > 0){
@@ -145,7 +129,7 @@ namespace update
 			}
 		}
 
-        public void Run(bool ignore_sound){
+        public void Run(){
 			Console.WriteLine(value: $"UPDATE FROM:{Config.url_home}");
 			Console.WriteLine(value: $"DOWNLOAD TO:{Config.workPath}");
 			Console.WriteLine(value: $"CONFIG FILE:{Assembly.GetExecutingAssembly().Location}.config");
@@ -170,7 +154,7 @@ namespace update
 
 			Console.Clear();
 			//filelist
-			Update(ignore_sound);
+			Update();
 			if(File.Exists(path: Config.newVersionFile)){
 				File.Delete(path: Config.versionFile);
 				File.Move(sourceFileName: Config.newVersionFile, destFileName: Config.versionFile);

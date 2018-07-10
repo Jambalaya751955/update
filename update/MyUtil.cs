@@ -5,7 +5,6 @@
  * 时间: 15:34
  * 
  */
-using System;
 using System.IO;
 using System.Text;
 using System.Net;
@@ -55,15 +54,16 @@ namespace update
 				return "";
 			long filesize = 0;
 			try {
-                FileStream file = new FileStream(fileName, FileMode.Open);
-                filesize = file.Length;
-                System.Security.Cryptography.MD5 md5 = new System.Security.Cryptography.MD5CryptoServiceProvider();
-				byte[] retVal = md5.ComputeHash(file);
-                file.Close();
-
+                byte[] retVal;
+                using (FileStream file = new FileStream(path: fileName, mode: FileMode.Open)){
+                    filesize = file.Length;
+                    System.Security.Cryptography.MD5 md5 = new System.Security.Cryptography.MD5CryptoServiceProvider();
+                    retVal = md5.ComputeHash(inputStream: file);
+                }
+                
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < retVal.Length; i++)
-                    sb.Append(retVal[i].ToString("x2"));
+                    sb.Append(value: retVal[i].ToString(format: "x2"));
                 return sb.ToString();
             }
 			catch {

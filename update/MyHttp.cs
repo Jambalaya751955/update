@@ -22,12 +22,9 @@ namespace update
 		public static int MAX_NUM = 0x10;
         private readonly string url;
         private readonly string filename;
-        private static int NTASK=0;
-		private static int TASK=0;
+        private static int NTASK = 0;
+		private static int TASK = 0;
 		private readonly Fileinfo ff;
-		private static bool isProxy = false;
-		private static string proxyip;
-		private static int proxyport;
 		private static IMyHttpListener imyhttplistiner = null;
 		
 		public MyHttp(string url, string filename, Fileinfo ff){
@@ -53,27 +50,20 @@ namespace update
 			NUM--;
 		}
 
-        public static void SetListner(IMyHttpListener listiner) => imyhttplistiner = listiner;
+        public static void SetListner(IMyHttpListener listner) => imyhttplistiner = listner;
 
         public static void Init(int max){
 			ServicePointManager.DefaultConnectionLimit = 255;
 			MAX_NUM = max;
 		}
 		
-		public static void SetProxy(bool isProxy, string proxyip, int proxyport){
-            MyHttp.isProxy = isProxy;
-            MyHttp.proxyip = proxyip;
-            MyHttp.proxyport = proxyport;
-		}
-
-        public static bool IsOK() => (NTASK == TASK);
+		public static bool IsOK() => (NTASK == TASK);
 
         public static int GetTask() => TASK - NTASK;
 
         public static bool DownLoad(string url, string filename) => DownLoad(url: url, filename: filename, ff: null);
 
-        public static bool DownLoad(string url, string filename, Fileinfo ff)
-		{
+        public static bool DownLoad(string url, string filename, Fileinfo ff){
 			if(imyhttplistiner != null)
 				imyhttplistiner.OnStart(name: url, file: filename);
 
@@ -90,8 +80,8 @@ namespace update
                 //Myrq.UserAgent="Mozilla/5.0 (Windows NT 6.2; WOW64) "
                 //	+"AppleWebKit/537.36 (KHTML, like Gecko) "
                 //	+"Chrome/27.0.1453.94 Safari/537.36";
-                if (isProxy)
-                    httpWebRequest.Proxy = new WebProxy(Host: proxyip, Port: proxyport);
+                if (Config.useProxy)
+                    httpWebRequest.Proxy = new WebProxy(Host: Config.proxyIP, Port: Config.proxyPort);
 
                 using (HttpWebResponse httpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse()){
                     using (Stream st = httpWebResponse.GetResponseStream()){
@@ -111,7 +101,7 @@ namespace update
                 File.Move(sourceFileName: $"{filename}.tmp", destFileName: filename);
             }
             catch (Exception){
-                isOK = false;
+                Console.WriteLine(value: "The webrequest or webresponse threw the Exception.");
             }
             isOK = File.Exists(path: filename);
 			if(imyhttplistiner != null)
