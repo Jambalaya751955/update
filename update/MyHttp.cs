@@ -101,7 +101,7 @@ namespace update
                 File.Move(sourceFileName: $"{filename}.tmp", destFileName: filename);
             }
             catch (Exception){
-                Console.WriteLine(value: "The webrequest or webresponse threw the Exception.");
+                Console.WriteLine(value: "The WebRequest or WebResponse threw the Exception.");
             }
             isOK = File.Exists(path: filename);
 			if(imyhttplistiner != null)

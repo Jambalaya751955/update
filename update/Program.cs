@@ -6,6 +6,7 @@
  * 
  */
 using System;
+using System.Configuration;
 
 namespace update
 {
@@ -57,8 +58,10 @@ namespace update
                         break;
                 }
             }else {
-                Config.Init(workPath: null, url_home: null);
-                Download();
+                for (Config.count = 1; !string.IsNullOrEmpty(value: ConfigurationManager.AppSettings[name: $"url{Config.count}"]); Config.count++){
+                    Config.Init(workPath: null, url_home: null);
+                    Download();
+                }
             }
             Console.WriteLine(value: "Press Any Key to continue ... ... ");
 			Console.ReadKey(intercept: true);

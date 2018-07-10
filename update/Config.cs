@@ -58,6 +58,8 @@ namespace update
         public static bool ignore_sound = false;
         /// <summary>Download without specific files</summary>
         public static string[] ignores;
+        /// <summary>The number of the multiple repositories</summary>
+        public static int count = 1;
 
         public static string GetUrl(string name) => url_home + name;
 
@@ -69,23 +71,23 @@ namespace update
             else
                 Config.workPath = workPath;
 			if(string.IsNullOrEmpty(value: url_home))
-                Config.url_home = ConfigurationManager.AppSettings[name: "url"];
+                Config.url_home = ConfigurationManager.AppSettings[name: $"url{count}"];
 			else
                 Config.url_home = url_home;
-            url_version = $"{Config.url_home}update/version.txt";
+            url_version = $"{Config.url_home}update/version{count}.txt";
             url_delete = $"{Config.url_home}update/delete.txt";
-            url_filelist = $"{Config.url_home}update/filelist.txt";
+            url_filelist = $"{Config.url_home}update/filelist{count}.txt";
             url_rename = $"{Config.url_home}update/rename.txt";
 
             infoPath = Path.Combine(path1: Config.workPath, path2: "update");
 			if(!Directory.Exists(path: infoPath))
 				Directory.CreateDirectory(path: infoPath);
-			versionFile = Path.Combine(path1: infoPath, path2: "version.txt");
-			newVersionFile = Path.Combine(path1: infoPath, path2: "version_new.txt");
+			versionFile = Path.Combine(path1: infoPath, path2: $"version{count}.txt");
+			newVersionFile = Path.Combine(path1: infoPath, path2: $"version_new{count}.txt");
 			deleteFile = Path.Combine(path1: infoPath, path2: "delete.txt");
 			renameFile = Path.Combine(path1: infoPath, path2: "rename.txt");
-			filelistFile = Path.Combine(path1: infoPath, path2: "filelist.txt");
-			errorFile = Path.Combine(path1: infoPath, path2: "error.txt");
+			filelistFile = Path.Combine(path1: infoPath, path2: $"filelist{count}.txt");
+			errorFile = Path.Combine(path1: infoPath, path2: $"error{count}.txt");
 		}
 
 		public static void Init(string workPath, string url_home){

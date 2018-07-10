@@ -89,6 +89,7 @@ namespace update
             }
             //下载文件
             new MyHttp(url: Config.GetUrl(name: name), filename: Config.GetPath(name: name), ff: new Fileinfo(name: name, md5: md5)).Start();
+            ShowProcess(Num: Num++, All_num: All_num);
             return true;
             //return MyHttp.DownLoad(url_download+name,file);
         }
@@ -116,7 +117,7 @@ namespace update
 				if(!line.StartsWith(value: "#")){
                     if (line.Split(separator: '\t').Length >= 2)
                         Download(name: line.Split(separator: '\t')[0], md5: line.Split(separator: '\t')[1]);
-				}
+                }
 			}
 
 			while(!MyHttp.IsOK()){
@@ -159,13 +160,10 @@ namespace update
 				File.Delete(path: Config.versionFile);
 				File.Move(sourceFileName: Config.newVersionFile, destFileName: Config.versionFile);
 			}
-			Console.WriteLine(value: "UPDATE COMPLETE!! You can safely close this window, press any key to quit.");
+			Console.WriteLine(value: "UPDATE COMPLETE!!");
 		}
 
         public void OnEnd(Fileinfo ff, bool isOK){
-            if (All_num > 0)
-                ShowProcess(Num: Num++, All_num: All_num);
-
             if (!isOK){
                 if (ff != null){
                     Console.WriteLine(value: $"DOWNLOAD FAILED:{Config.GetUrl(ff.name)}");
